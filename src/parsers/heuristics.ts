@@ -2,7 +2,9 @@ import * as cheerio from 'cheerio';
 
 const DEFAULT_REMOVE_SELECTORS = [
   'script', 'style', 'nav', 'footer', 'iframe', 'noscript', 'header', 'aside',
-  '.ads', '.ad', '.social-share', '.comments', '#comments', '.cookie-banner'
+  '.ads', '.ad', '.social-share', '.comments', '#comments', '.cookie-banner',
+  '#fides-overlay', '#onetrust-consent-sdk', '#ot-sdk-cookie-policy',
+  '[id*="consent"]', '[class*="cookie-banner"]', '[id*="fides"]'
 ];
 
 const CONTENT_KEYWORDS = [

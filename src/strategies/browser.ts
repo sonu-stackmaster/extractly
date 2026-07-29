@@ -76,9 +76,34 @@ export async function fetchWithBrowser(
 
       page.setDefaultNavigationTimeout(timeoutMs);
 
-      const response = await page.goto(url, {
-        waitUntil: 'domcontentloaded',
-        timeout: timeoutMs,
+      let response;
+      try {
+        response = await page.goto(url, {
+          waitUntil: 'networkidle2',
+          timeout: timeoutMs,
+        });
+      } catch {
+        // Fallback if networkidle2 times out
+        response = await page.goto(url, {
+          waitUntil: 'domcontentloaded',
+          timeout: timeoutMs,
+        });
+      }
+
+      // Allow 1.5 seconds for client-side JS/React/Vue frameworks to finish rendering DOM
+      await new Promise((res) => setTimeout(res, 1500));
+
+      // Remove cookie consent banners / overlays in page before grabbing HTML
+      await page.evaluate(() => {
+        try {
+          const selectors = [
+            '#fides-overlay', '#onetrust-consent-sdk', '.cookie-banner',
+            '[id*="consent"]', '[class*="cookie-banner"]', '[id*="fides"]'
+          ];
+          selectors.forEach((sel) => {
+            document.querySelectorAll(sel).forEach((el) => el.remove());
+          });
+        } catch {}
       });
 
       const html = await page.content();

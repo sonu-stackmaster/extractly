@@ -128,20 +128,24 @@ export async function extract(
     options.customSelectors
   );
 
-  // Select best text content
+  // Select best text content representation
   let title = readabilityResult?.title || '';
   let textContent = '';
 
-  if (readabilityResult && readabilityResult.textContent.length > (heuristicsText?.length || 0)) {
-    textContent = readabilityResult.textContent;
-  } else if (heuristicsText) {
-    textContent = heuristicsText;
-  } else if (readabilityResult?.textContent) {
-    textContent = readabilityResult.textContent;
+  const rText = readabilityResult?.textContent || '';
+  const hText = heuristicsText || '';
+
+  // Choose the most comprehensive content text
+  if (hText.length >= rText.length) {
+    textContent = hText;
+  } else {
+    textContent = rText;
   }
 
-  // Generate Markdown
-  const rawHtmlForMarkdown = readabilityResult?.content || htmlContent;
+  // Generate Markdown using the richer HTML source
+  const rawHtmlForMarkdown = (htmlContent.length > (readabilityResult?.content?.length || 0) * 3)
+    ? htmlContent
+    : (readabilityResult?.content || htmlContent);
   const markdownContent = convertToMarkdown(rawHtmlForMarkdown);
 
   // Extract Metadata
