@@ -23,7 +23,9 @@ export async function fetchWithHttp(
 
       if (options.cookies && options.cookies.length > 0) {
         const cookieStr = options.cookies.map((c) => `${c.name}=${c.value}`).join('; ');
-        headers['Cookie'] = cookieStr;
+        headers['Cookie'] = cookieStr.replace(/[^\x00-\x7F]/g, '');
+      } else if (headers['Cookie']) {
+        headers['Cookie'] = headers['Cookie'].replace(/[^\x00-\x7F]/g, '');
       }
 
       const controller = new AbortController();

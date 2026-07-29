@@ -1,4 +1,5 @@
 export { extract, extractMany } from './extract.js';
+export { parseCookies } from './utils/url.js';
 export type {
   ExtractOptions,
   ExtractResult,

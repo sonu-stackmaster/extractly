@@ -1,5 +1,6 @@
 import { ExtractOptions } from '../types.js';
 import { getRandomUserAgent } from '../utils/user-agents.js';
+import { parseCookies } from '../utils/url.js';
 
 export interface BrowserFetchResult {
   html: string;
@@ -69,10 +70,11 @@ export async function fetchWithBrowser(
 
       await page.setViewport({ width: 1920, height: 1080 });
 
-      // Set cookies if provided
+      const targetHost = new URL(url).hostname;
+
+      // Set cookies if provided as array
       if (options.cookies && options.cookies.length > 0) {
-        const targetHost = new URL(url).hostname;
-        const targetDomain = targetHost.startsWith('.') ? targetHost : `.${targetHost.replace(/^www\./, '')}`;
+        const targetDomain = `.${targetHost.replace(/^www\./, '')}`;
         const formattedCookies = options.cookies.map((c) => ({
           domain: c.domain || targetDomain,
           path: c.path || '/',
@@ -81,23 +83,13 @@ export async function fetchWithBrowser(
         await page.setCookie(...formattedCookies);
       }
 
-      // Parse cookie header string if passed in headers
+      // Parse cookie header/table string if passed in headers
       const rawCookieHeader = options.headers?.Cookie || options.headers?.cookie;
       if (rawCookieHeader && typeof rawCookieHeader === 'string') {
         try {
-          const parsedHost = new URL(url).hostname;
-          const parsedDomain = `.${parsedHost.replace(/^www\./, '')}`;
-          const cookiePairs = rawCookieHeader.split(';').map((s) => s.trim().split('='));
-          const cookieObjects = cookiePairs
-            .filter((p) => p.length >= 2)
-            .map(([name, ...val]) => ({
-              name,
-              value: val.join('='),
-              domain: parsedDomain,
-              path: '/',
-            }));
-          if (cookieObjects.length > 0) {
-            await page.setCookie(...cookieObjects);
+          const parsedCookies = parseCookies(rawCookieHeader, targetHost);
+          if (parsedCookies.length > 0) {
+            await page.setCookie(...parsedCookies);
           }
         } catch {}
       }
