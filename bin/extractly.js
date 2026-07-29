@@ -21,11 +21,13 @@ async function main() {
     console.log('🌐 Final URL:', result.url);
     console.log('⏱️ Execution Time:', `${result.stats.executionTimeMs}ms`);
     console.log('⚡ Strategy Used:', result.stats.strategyUsed);
+    console.log('📊 Total Characters:', result.stats.contentLength);
+    console.log('📝 Total Words:', result.stats.wordCount);
     console.log('==================================================\n');
 
-    console.log('📄 Extracted Text Preview (First 500 chars):');
+    console.log('📄 Full Extracted Text Content:');
     console.log('--------------------------------------------------');
-    console.log(result.text.substring(0, 500) + (result.text.length > 500 ? '...' : ''));
+    console.log(result.text);
     console.log('--------------------------------------------------\n');
 
     if (Object.keys(result.metadata).length > 0) {

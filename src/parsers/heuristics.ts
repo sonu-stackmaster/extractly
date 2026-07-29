@@ -15,6 +15,18 @@ const CONTENT_KEYWORDS = [
 ];
 
 /**
+ * Safely extracts text from DOM elements preserving space separation between tags
+ */
+function getCleanText($: cheerio.CheerioAPI, elem: any): string {
+  const clone = $(elem).clone();
+
+  // Inject spaces around block level elements & line breaks
+  clone.find('p, div, h1, h2, h3, h4, h5, h6, li, section, article, br, td, th').before(' ').after(' ');
+
+  return clone.text().replace(/\s+/g, ' ').trim();
+}
+
+/**
  * 9-tier comprehensive heuristic extraction engine
  */
 export function extractWithHeuristics(
@@ -42,7 +54,7 @@ export function extractWithHeuristics(
   if (customSelectors && customSelectors.length > 0) {
     for (const sel of customSelectors) {
       $(sel).each((_, elem) => {
-        const txt = $(elem).text().trim();
+        const txt = getCleanText($, elem);
         if (txt.length > 20) {
           contentParts.push(txt);
         }
@@ -52,7 +64,7 @@ export function extractWithHeuristics(
 
   // Strategy 1: Look for <article> tag
   $('article').each((_, elem) => {
-    const text = $(elem).text().replace(/\s+/g, ' ').trim();
+    const text = getCleanText($, elem);
     if (text.length > 50) {
       contentParts.push(text);
     }
@@ -60,7 +72,7 @@ export function extractWithHeuristics(
 
   // Strategy 2: Look for <main> tag
   $('main').each((_, elem) => {
-    const text = $(elem).text().replace(/\s+/g, ' ').trim();
+    const text = getCleanText($, elem);
     if (text.length > 50) {
       contentParts.push(text);
     }
@@ -73,7 +85,7 @@ export function extractWithHeuristics(
     const combined = `${className || ''} ${idName || ''}`.toLowerCase();
 
     if (CONTENT_KEYWORDS.some((kw) => combined.includes(kw))) {
-      const text = $(elem).text().replace(/\s+/g, ' ').trim();
+      const text = getCleanText($, elem);
       if (text.length > 100) {
         contentParts.push(text);
       }
@@ -83,7 +95,7 @@ export function extractWithHeuristics(
   // Strategy 4: Look for paragraphs <p>
   const paragraphTexts: string[] = [];
   $('p').each((_, elem) => {
-    const text = $(elem).text().replace(/\s+/g, ' ').trim();
+    const text = getCleanText($, elem);
     if (text.length > 30) {
       paragraphTexts.push(text);
     }
@@ -94,13 +106,13 @@ export function extractWithHeuristics(
 
   // Strategy 5: Headings and next sibling text
   $('h1, h2, h3, h4, h5, h6').each((_, elem) => {
-    const headingText = $(elem).text().replace(/\s+/g, ' ').trim();
+    const headingText = getCleanText($, elem);
     if (headingText.length > 10) {
       contentParts.push(headingText);
 
       const nextSibling = $(elem).next();
       if (nextSibling.length > 0) {
-        const siblingText = nextSibling.text().replace(/\s+/g, ' ').trim();
+        const siblingText = getCleanText($, nextSibling.get(0));
         if (siblingText.length > 50) {
           contentParts.push(siblingText);
         }
@@ -110,7 +122,7 @@ export function extractWithHeuristics(
 
   // Strategy 6: Lists <ul>, <ol>
   $('ul, ol').each((_, elem) => {
-    const listText = $(elem).text().replace(/\s+/g, ' ').trim();
+    const listText = getCleanText($, elem);
     if (listText.length > 50) {
       contentParts.push(listText);
     }
@@ -118,7 +130,7 @@ export function extractWithHeuristics(
 
   // Strategy 7: <section> tags
   $('section').each((_, elem) => {
-    const sectionText = $(elem).text().replace(/\s+/g, ' ').trim();
+    const sectionText = getCleanText($, elem);
     if (sectionText.length > 100) {
       contentParts.push(sectionText);
     }
@@ -126,14 +138,14 @@ export function extractWithHeuristics(
 
   // Strategy 8: Substantial <div> elements
   $('div').each((_, elem) => {
-    const divText = $(elem).text().replace(/\s+/g, ' ').trim();
+    const divText = getCleanText($, elem);
     if (divText.length > 200) {
       contentParts.push(divText);
     }
   });
 
   // Strategy 9: Fallback to <body>
-  const bodyText = $('body').text().replace(/\s+/g, ' ').trim();
+  const bodyText = getCleanText($, $('body').get(0));
   if (bodyText.length > 100) {
     contentParts.push(bodyText);
   }
