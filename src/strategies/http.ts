@@ -21,6 +21,11 @@ export async function fetchWithHttp(
     try {
       const headers = getStealthHeaders(options.headers);
 
+      if (options.cookies && options.cookies.length > 0) {
+        const cookieStr = options.cookies.map((c) => `${c.name}=${c.value}`).join('; ');
+        headers['Cookie'] = cookieStr;
+      }
+
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), timeoutMs);
 

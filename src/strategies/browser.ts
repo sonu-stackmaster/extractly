@@ -68,6 +68,32 @@ export async function fetchWithBrowser(
       const page = await browser.newPage();
 
       await page.setViewport({ width: 1920, height: 1080 });
+
+      // Set cookies if provided
+      if (options.cookies && options.cookies.length > 0) {
+        await page.setCookie(...options.cookies);
+      }
+
+      // Parse cookie header string if passed in headers
+      const rawCookieHeader = options.headers?.Cookie || options.headers?.cookie;
+      if (rawCookieHeader && typeof rawCookieHeader === 'string') {
+        try {
+          const parsedDomain = new URL(url).hostname;
+          const cookiePairs = rawCookieHeader.split(';').map((s) => s.trim().split('='));
+          const cookieObjects = cookiePairs
+            .filter((p) => p.length >= 2)
+            .map(([name, ...val]) => ({
+              name,
+              value: val.join('='),
+              domain: parsedDomain,
+              path: '/',
+            }));
+          if (cookieObjects.length > 0) {
+            await page.setCookie(...cookieObjects);
+          }
+        } catch {}
+      }
+
       await page.setExtraHTTPHeaders({
         'Accept-Language': 'en-US,en;q=0.9',
         'DNT': '1',
@@ -109,6 +135,23 @@ export async function fetchWithBrowser(
       const html = await page.content();
       const status = response ? response.status() : 200;
       const finalUrl = page.url();
+
+      // Check if Chrome ran into a bot-block or rate-limit error page (e.g. LinkedIn HTTP 429/999)
+      if (
+        finalUrl.startsWith('chrome-error://') ||
+        status === 429 ||
+        status === 403 ||
+        status === 999 ||
+        html.includes('HTTP ERROR 429') ||
+        html.includes('HTTP ERROR 403')
+      ) {
+        const hostname = new URL(url).hostname;
+        throw new Error(
+          `Scraping blocked by ${hostname} (HTTP ${status === 200 ? '429/Block' : status}: Rate Limited / Access Denied). ` +
+          `Sites like LinkedIn strictly block unauthenticated automated scrapers. ` +
+          `To scrape ${hostname}, provide session cookies via options.cookies or options.headers.Cookie, or pass an authenticated proxy.`
+        );
+      }
 
       return {
         html,

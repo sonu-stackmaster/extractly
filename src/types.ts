@@ -6,6 +6,17 @@ export interface DelayOptions {
   max: number;
 }
 
+export interface CookieParam {
+  name: string;
+  value: string;
+  domain?: string;
+  path?: string;
+  expires?: number;
+  httpOnly?: boolean;
+  secure?: boolean;
+  sameSite?: 'Strict' | 'Lax' | 'None';
+}
+
 export interface ExtractOptions {
   /**
    * Extraction strategy mode:
@@ -30,9 +41,14 @@ export interface ExtractOptions {
   timeout?: number;
 
   /**
-   * Custom HTTP headers to include with the request
+   * Custom HTTP headers to include with the request (e.g. { 'Cookie': 'li_at=...' })
    */
   headers?: Record<string, string>;
+
+  /**
+   * Session cookies to pass to headless browser or HTTP request
+   */
+  cookies?: CookieParam[];
 
   /**
    * Optional proxy URL (e.g. 'http://username:password@proxy.example.com:8080')
