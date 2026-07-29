@@ -1,0 +1,79 @@
+{
+  "name": "extractly",
+  "version": "1.0.0",
+  "description": "High-performance, resilient web scraping engine for Node.js featuring intelligent anti-bot bypass, cascading fallback strategies, modern article readability parsing, Markdown conversion, and rich metadata extraction.",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest run",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "scraper",
+    "web-scraper",
+    "extract",
+    "content-extraction",
+    "article-parser",
+    "readability",
+    "html-to-markdown",
+    "puppeteer",
+    "stealth",
+    "metadata-extractor",
+    "anti-bot",
+    "crawl"
+  ],
+  "author": "sonu-stackmaster",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sonu-stackmaster/extractly.git"
+  },
+  "bugs": {
+    "url": "https://github.com/sonu-stackmaster/extractly/issues"
+  },
+  "homepage": "https://github.com/sonu-stackmaster/extractly#readme",
+  "dependencies": {
+    "@mozilla/readability": "^0.5.0",
+    "cheerio": "^1.0.0-rc.12",
+    "jsdom": "^24.1.0",
+    "turndown": "^7.2.0",
+    "turndown-plugin-gfm": "^1.0.2",
+    "undici": "^6.19.2"
+  },
+  "devDependencies": {
+    "@types/jsdom": "^21.1.7",
+    "@types/node": "^20.14.9",
+    "@types/turndown": "^5.0.4",
+    "tsup": "^8.1.0",
+    "typescript": "^5.5.2",
+    "vitest": "^1.6.0"
+  },
+  "peerDependencies": {
+    "puppeteer-extra": "^3.3.6",
+    "puppeteer-extra-plugin-stealth": "^2.11.2"
+  },
+  "peerDependenciesMeta": {
+    "puppeteer-extra": {
+      "optional": true
+    },
+    "puppeteer-extra-plugin-stealth": {
+      "optional": true
+    }
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
