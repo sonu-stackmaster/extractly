@@ -71,14 +71,22 @@ export async function fetchWithBrowser(
 
       // Set cookies if provided
       if (options.cookies && options.cookies.length > 0) {
-        await page.setCookie(...options.cookies);
+        const targetHost = new URL(url).hostname;
+        const targetDomain = targetHost.startsWith('.') ? targetHost : `.${targetHost.replace(/^www\./, '')}`;
+        const formattedCookies = options.cookies.map((c) => ({
+          domain: c.domain || targetDomain,
+          path: c.path || '/',
+          ...c,
+        }));
+        await page.setCookie(...formattedCookies);
       }
 
       // Parse cookie header string if passed in headers
       const rawCookieHeader = options.headers?.Cookie || options.headers?.cookie;
       if (rawCookieHeader && typeof rawCookieHeader === 'string') {
         try {
-          const parsedDomain = new URL(url).hostname;
+          const parsedHost = new URL(url).hostname;
+          const parsedDomain = `.${parsedHost.replace(/^www\./, '')}`;
           const cookiePairs = rawCookieHeader.split(';').map((s) => s.trim().split('='));
           const cookieObjects = cookiePairs
             .filter((p) => p.length >= 2)
@@ -102,22 +110,13 @@ export async function fetchWithBrowser(
 
       page.setDefaultNavigationTimeout(timeoutMs);
 
-      let response;
-      try {
-        response = await page.goto(url, {
-          waitUntil: 'networkidle2',
-          timeout: timeoutMs,
-        });
-      } catch {
-        // Fallback if networkidle2 times out
-        response = await page.goto(url, {
-          waitUntil: 'domcontentloaded',
-          timeout: timeoutMs,
-        });
-      }
+      const response = await page.goto(url, {
+        waitUntil: 'domcontentloaded',
+        timeout: timeoutMs,
+      });
 
-      // Allow 1.5 seconds for client-side JS/React/Vue frameworks to finish rendering DOM
-      await new Promise((res) => setTimeout(res, 1500));
+      // Allow 2 seconds for SPA frameworks / LinkedIn JS to load profile data
+      await new Promise((res) => setTimeout(res, 2000));
 
       // Remove cookie consent banners / overlays in page before grabbing HTML
       await page.evaluate(() => {
