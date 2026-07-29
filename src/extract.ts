@@ -13,6 +13,21 @@ import { parseWithReadability } from './parsers/readability.js';
 import { extractMetadata } from './parsers/metadata.js';
 import { convertToMarkdown } from './parsers/markdown.js';
 
+function isBotChallengePage(html: string): boolean {
+  if (!html) return true;
+  const lowerHtml = html.toLowerCase();
+  return (
+    lowerHtml.includes('just a moment...') ||
+    lowerHtml.includes('attention required') ||
+    lowerHtml.includes('security check') ||
+    lowerHtml.includes('ddos protection') ||
+    lowerHtml.includes('cf-browser-verification') ||
+    lowerHtml.includes('checking your browser before accessing') ||
+    lowerHtml.includes('enable javascript and cookies to continue') ||
+    lowerHtml.includes('challenge-running')
+  );
+}
+
 /**
  * Extracts clean text, markdown, HTML, and metadata from any website URL.
  *
@@ -70,13 +85,15 @@ export async function extract(
       finalUrl = res.url;
       strategyUsed = 'fast-http';
 
-      // Check if extracted content is sufficient
+      // Check if extracted content is sufficient or if hit by Cloudflare / Bot protection challenge
       const quickTestText = extractWithHeuristics(htmlContent, options.removeSelectors, options.customSelectors);
-      if (!quickTestText || quickTestText.length < 50) {
-        // Attempt browser fallback if HTTP content returned sparse results
+      const isChallenge = isBotChallengePage(htmlContent);
+
+      if (!quickTestText || quickTestText.length < 50 || isChallenge) {
+        // Attempt browser fallback if HTTP content returned sparse or blocked results
         try {
           const browserRes = await fetchWithBrowser(url, options);
-          if (browserRes.html && browserRes.html.length > htmlContent.length) {
+          if (browserRes.html && (browserRes.html.length > htmlContent.length || isChallenge)) {
             htmlContent = browserRes.html;
             httpStatus = browserRes.status;
             finalUrl = browserRes.url;
