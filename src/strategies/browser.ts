@@ -47,8 +47,10 @@ export async function fetchWithBrowser(
 
   try {
     // Dynamically attempt to load puppeteer-extra and stealth plugin
-    const puppeteerExtra = (await import('puppeteer-extra')).default;
-    const StealthPlugin = (await import('puppeteer-extra-plugin-stealth')).default;
+    const puppeteerExtraMod = await import('puppeteer-extra');
+    const puppeteerExtra = puppeteerExtraMod.default || puppeteerExtraMod;
+    const stealthMod = await import('puppeteer-extra-plugin-stealth');
+    const StealthPlugin = stealthMod.default || stealthMod;
 
     puppeteerExtra.use(StealthPlugin());
 

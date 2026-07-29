@@ -13,18 +13,20 @@ import { parseWithReadability } from './parsers/readability.js';
 import { extractMetadata } from './parsers/metadata.js';
 import { convertToMarkdown } from './parsers/markdown.js';
 
-function isBotChallengePage(html: string): boolean {
+function isBotChallengePage(html: string, title?: string): boolean {
   if (!html) return true;
-  const lowerHtml = html.toLowerCase();
+  const lower = `${html} ${title || ''}`.toLowerCase();
   return (
-    lowerHtml.includes('just a moment...') ||
-    lowerHtml.includes('attention required') ||
-    lowerHtml.includes('security check') ||
-    lowerHtml.includes('ddos protection') ||
-    lowerHtml.includes('cf-browser-verification') ||
-    lowerHtml.includes('checking your browser before accessing') ||
-    lowerHtml.includes('enable javascript and cookies to continue') ||
-    lowerHtml.includes('challenge-running')
+    lower.includes('just a moment') ||
+    lower.includes('attention required') ||
+    lower.includes('security check') ||
+    lower.includes('ddos protection') ||
+    lower.includes('cf-browser-verification') ||
+    lower.includes('checking your browser before accessing') ||
+    lower.includes('enable javascript and cookies to continue') ||
+    lower.includes('challenge-running') ||
+    lower.includes('verify you are human') ||
+    lower.includes('cloudflare')
   );
 }
 
@@ -87,7 +89,8 @@ export async function extract(
 
       // Check if extracted content is sufficient or if hit by Cloudflare / Bot protection challenge
       const quickTestText = extractWithHeuristics(htmlContent, options.removeSelectors, options.customSelectors);
-      const isChallenge = isBotChallengePage(htmlContent);
+      const quickMeta = extractMetadata(htmlContent, finalUrl);
+      const isChallenge = isBotChallengePage(htmlContent, quickMeta.title);
 
       if (!quickTestText || quickTestText.length < 50 || isChallenge) {
         // Attempt browser fallback if HTTP content returned sparse or blocked results
